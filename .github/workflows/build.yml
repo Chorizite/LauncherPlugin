@@ -10,6 +10,6 @@ jobs:
       packages: write
       contents: write
     with:
-      package_id: Chorizite.Plugins.RmlUi
+      package_id: Chorizite.Plugins.Launcher
 
 
