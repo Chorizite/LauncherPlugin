@@ -1,4 +1,4 @@
-﻿# Chorizite RmlUi plugin
+﻿# Chorizite Launcher plugin
 
-A [Chorizite](https://chorizite.github.io/) plugin that adds [RmlUi](https://github.com/mikke89/RmlUi) view that support html/css/lua.
+A [Chorizite](https://chorizite.github.io/) plugin that adds launcher functionality / integration.
 
