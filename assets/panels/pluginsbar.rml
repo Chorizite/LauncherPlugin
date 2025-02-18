@@ -11,8 +11,8 @@
       #handle {
         width: 20px;
         height: 20px;
-        decorator: image(dat://0x060074C9);
-        background-color: #222;
+        decorator: image( icon-move );
+        background-color: #111111;
         cursor: 0x06006119 14 14;
       }
 
@@ -41,7 +41,7 @@
         width: 20px;
         padding: 0;
         margin: 0;
-        decorator: image(dat://0x06004D20);
+        decorator: image( icon-slot-bg );
         color: #aaa;
         position: relative;
         display: block;
@@ -59,7 +59,7 @@
       }
 
       .plugin-icons button.icon.visible .overlay {
-        decorator: image(dat://0x0600749B);
+        decorator: image( icon-border-thick );
       }
 
       button.icon {
