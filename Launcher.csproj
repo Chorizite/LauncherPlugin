@@ -28,7 +28,7 @@
     <Company>Chorizite</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>A Chorizite plugin that adds launcher functionality / integration.</Description>
-    <RepositoryUrl>https://github.com/Chorizite/LuaPlugin</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Chorizite/LauncherPlugin</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -67,9 +67,9 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Chorizite.Core" Version="0.0.5" ExcludeAssets="runtime" />
-    <PackageReference Include="Chorizite.Plugins.RmlUi" Version="0.0.1" ExcludeAssets="runtime" />
-    <PackageReference Include="RmlUi.Net" Version="1.0.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Chorizite.Core" Version="0.0.7" ExcludeAssets="runtime" />
+    <PackageReference Include="Chorizite.Plugins.RmlUi" Version="0.0.3" ExcludeAssets="runtime" />
+    <PackageReference Include="RmlUi.Net" Version="1.0.1" ExcludeAssets="runtime" />
     <PackageReference Include="Chorizite.Common" Version="1.0.0" ExcludeAssets="runtime" />
     <PackageReference Include="Autofac" Version="8.2.0" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" ExcludeAssets="runtime" />
