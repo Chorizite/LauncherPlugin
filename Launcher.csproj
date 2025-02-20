@@ -40,6 +40,9 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <None Update="assets\panels\pluginsbar.lua">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
