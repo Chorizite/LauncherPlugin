@@ -30,7 +30,7 @@ local function loadSettings()
 
   -- default settings
   if settings.clientpath == nil or #settings.clientpath == 0 then
-    settings.clientpath = "C:\\Turbine\\Asheron's Call\\acclient.exe"
+    settings.clientpath = launcherBackend:GetDefaultClientPath()
   end
   if settings.server == nil or #settings.server == 0 then
     settings.server = "play.coldeve.ac:9000"
@@ -46,7 +46,7 @@ local function saveSettings(state)
   local settingsfile = io.open(SETTINGS_FILE, "w")
   
   if settingsfile == nil then
-    error("Error saving settings to file: ".. settingsfile)
+    error("Error saving settings to file: " .. SETTINGS_FILE)
   end
 
   settingsfile:write(json.encode({
