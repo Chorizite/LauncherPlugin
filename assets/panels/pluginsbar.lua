@@ -10,13 +10,22 @@ local state = rx:CreateState({
   Cheating = 1
 })
 
+local function updatePanelState(panel)
+  if not panel.ShowInBar then
+    state.Plugins[panel.Name] = nil
+  else
+    state.Plugins[panel.Name] = state.Plugins[panel.Name] or {}
+    state.Plugins[panel.Name].icon = panel.IconUri
+    state.Plugins[panel.Name].isVisible = panel.IsVisible
+    state.Plugins[panel.Name].wantsAttention = panel.WantsAttention
+  end
+  state.Cheating = state.Cheating + 1
+end
+
 local function LoadPlugins()
   for i=0,ui.PanelManager.Panels.Count-1 do
     if ui.PanelManager.Panels[i].ShowInBar then
-      state.Plugins[ui.PanelManager.Panels[i].Name] = {
-        ["isVisible"] = ui.PanelManager.Panels[i].IsVisible,
-        ["icon"] = ui.PanelManager.Panels[i].IconUri
-      }
+      updatePanelState(ui.PanelManager.Panels[i])
     end
   end
   state.Cheating = state.Cheating + 1
@@ -28,13 +37,7 @@ end)
 LoadPlugins()
 
 ui.PanelManager:OnPanelAdded('+', function(s, e)
-  if e.Panel.ShowInBar then
-    state.Plugins[e.Panel.Name] = state.Plugins[e.Panel.Name] or {
-      ["icon"] = e.Panel.IconUri
-    }
-    state.Plugins[e.Panel.Name].isVisible = e.Panel.IsVisible
-    state.Cheating = state.Cheating + 1
-  end
+  updatePanelState(e.Panel)
 end)
 
 ui.PanelManager:OnPanelRemoved('+', function(s, e)
@@ -43,12 +46,7 @@ ui.PanelManager:OnPanelRemoved('+', function(s, e)
 end)
 
 ui.PanelManager:OnPanelVisibilityChanged('+', function(s, e)
-  if e.Panel.ShowInBar then
-    state.Plugins[e.Panel.Name] = state.Plugins[e.Panel.Name] or {}
-    state.Plugins[e.Panel.Name].isVisible = e.Panel.IsVisible
-    state.Plugins[e.Panel.Name].icon = e.Panel.IconUri
-    state.Cheating = state.Cheating + 1
-  end
+  updatePanelState(e.Panel)
 end)
 
 local PluginsBarView = function(state)
@@ -66,32 +64,38 @@ local PluginsBarView = function(state)
         }, function()
           local res = {}
           for panelName,panelInfo in pairs(state.Plugins) do
-            res[#res + 1] = rx:Button({
-              class={
-                icon = true,
-                visible = panelInfo.isVisible
-              },
-              onclick=function()
-                if panelInfo.isVisible then
-                  ui.PanelManager:GetPanel(panelName):Hide()
-                else
-                  ui.PanelManager:GetPanel(panelName):Show()
-                  ui.PanelManager:GetPanel(panelName):PullToFront()
+            res[#res + 1] = rx:Div({
+              class = {
+                ["pulse"] = panelInfo.wantsAttention
+              }
+            }, {
+              rx:Button({
+                class={
+                  icon = true,
+                  visible = panelInfo.isVisible
+                },
+                onclick=function()
+                  if panelInfo.isVisible then
+                    ui.PanelManager:GetPanel(panelName):Hide()
+                  else
+                    ui.PanelManager:GetPanel(panelName):Show()
+                    ui.PanelManager:GetPanel(panelName):PullToFront()
+                  end
                 end
-              end
-            }, function()
-              if panelInfo.icon ~= nil then
-                return {
-                  rx:Div({ class="overlay" }, {
-                    rx:Img({ class="overlay", src=panelInfo.icon })
-                  })
-                }
-              else
-                return {
-                  rx:Div({ class="overlay" }, string.sub(panelName, 1, 1))
-                }
-              end
-            end)
+              }, function()
+                if panelInfo.icon ~= nil then
+                  return {
+                    rx:Div({ class="overlay" }, {
+                      rx:Img({ class="overlay", src=panelInfo.icon })
+                    })
+                  }
+                else
+                  return {
+                    rx:Div({ class="overlay" }, string.sub(panelName, 1, 1))
+                  }
+                end
+              end)
+            })
           end
           return res
         end)

@@ -11,11 +11,19 @@ using Chorizite.Core.Backend;
 using Chorizite.Common;
 using System.Text.Json.Serialization.Metadata;
 using Chorizite.Core.Backend.Launcher;
+using System.Threading.Tasks;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Linq;
+using System.Diagnostics;
 
 namespace Launcher {
     public class LauncherPlugin : IPluginCore, IScreenProvider<LauncherScreen>, ISerializeState<LauncherState>, ISerializeSettings<LauncherSettings> {
         private IPluginManager _pluginManager;
-        private readonly RmlUiPlugin RmlUi;
+
+        public UpdateChecker UpdateChecker { get; }
+
         private readonly Dictionary<LauncherScreen, string> _registeredScreens = [];
         private LauncherSettings _settings;
         private LauncherState _state;
@@ -25,6 +33,7 @@ namespace Launcher {
         private Panel? _panel;
         internal readonly ILauncherBackend LauncherBackend;
         internal readonly IChoriziteBackend Backend;
+        internal readonly RmlUiPlugin RmlUi;
 
         JsonTypeInfo<LauncherState> ISerializeState<LauncherState>.TypeInfo => SourceGenerationContext.Default.LauncherState;
         JsonTypeInfo<LauncherSettings> ISerializeSettings<LauncherSettings>.TypeInfo => SourceGenerationContext.Default.LauncherSettings;
@@ -52,6 +61,7 @@ namespace Launcher {
             Backend = backend;
             RmlUi = rmlui;
 
+            UpdateChecker = new UpdateChecker(this);
             Backend.Renderer.OnRender2D += Renderer_OnRender2D;
         }
 
@@ -89,9 +99,12 @@ namespace Launcher {
         }
 
         private void Renderer_OnRender2D(object? sender, EventArgs e) {
-            if (RmlUi.PanelManager.CurrentScreen is not null) {
-                LauncherBackend.SetWindowSize(RmlUi.PanelManager.CurrentScreen.Width, RmlUi.PanelManager.CurrentScreen.Height);
+            try {
+                if (RmlUi.PanelManager.CurrentScreen is not null) {
+                    LauncherBackend.SetWindowSize(RmlUi.PanelManager.CurrentScreen.Width, RmlUi.PanelManager.CurrentScreen.Height);
+                }
             }
+            catch { }
         }
 
         /// <inheritdoc/>
