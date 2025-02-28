@@ -148,12 +148,10 @@ namespace Launcher.Lib {
 
                     _downloadUrl = releaseInfo["DownloadUrl"]?.ToString() ?? null;
 
-                    CurrentVersion = new Version("0.0.1");
                     if (LatestVersion > CurrentVersion) {
                         _hasUpdate = true;
+                        CreateUpdatePanel();
                     }
-
-                    CreateUpdatePanel();
                 }
             }
             catch (Exception ex) {
