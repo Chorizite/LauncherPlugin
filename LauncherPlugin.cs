@@ -11,22 +11,18 @@ using Chorizite.Core.Backend;
 using Chorizite.Common;
 using System.Text.Json.Serialization.Metadata;
 using Chorizite.Core.Backend.Launcher;
-using System.Threading.Tasks;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Linq;
-using System.Diagnostics;
+using Autofac;
 
 namespace Launcher {
+    /// <summary>
+    /// Launcher plugin
+    /// </summary>
     public class LauncherPlugin : IPluginCore, IScreenProvider<LauncherScreen>, ISerializeState<LauncherState>, ISerializeSettings<LauncherSettings> {
         private IPluginManager _pluginManager;
 
-        public UpdateChecker UpdateChecker { get; }
-
         private readonly Dictionary<LauncherScreen, string> _registeredScreens = [];
-        private LauncherSettings _settings;
-        private LauncherState _state;
+        private LauncherSettings? _settings;
+        private LauncherState? _state;
 
         internal static LauncherPlugin? Instance { get; private set; }
         internal static ILogger? Log;
@@ -35,13 +31,27 @@ namespace Launcher {
         internal readonly IChoriziteBackend Backend;
         internal readonly RmlUiPlugin RmlUi;
 
+        internal readonly ILifetimeScope Scope;
+
         JsonTypeInfo<LauncherState> ISerializeState<LauncherState>.TypeInfo => SourceGenerationContext.Default.LauncherState;
         JsonTypeInfo<LauncherSettings> ISerializeSettings<LauncherSettings>.TypeInfo => SourceGenerationContext.Default.LauncherSettings;
 
+        /// <summary>
+        /// Update checker
+        /// </summary>
+        public UpdateChecker UpdateChecker { get; }
+
+        /// <summary>
+        /// Current screen
+        /// </summary>
         public LauncherScreen CurrentScreen {
-            get => _state.CurrentScreen;
+            get => _state?.CurrentScreen ?? LauncherScreen.None;
             set => SetScreen(value);
         }
+
+        /// <summary>
+        /// Current screen panel
+        /// </summary>
         public Screen? Screen { get; private set; }
 
         /// <summary>
@@ -53,19 +63,29 @@ namespace Launcher {
         }
         private readonly WeakEvent<ScreenChangedEventArgs> _OnScreenChanged = new();
 
-        protected LauncherPlugin(AssemblyPluginManifest manifest, IPluginManager pluginManager, ILogger log, RmlUiPlugin rmlui, ILauncherBackend launcherBackend, IChoriziteBackend backend) : base(manifest) {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        protected LauncherPlugin(AssemblyPluginManifest manifest, IPluginManager pluginManager, ILogger log, RmlUiPlugin rmlui, ILauncherBackend launcherBackend, ILifetimeScope scope, IChoriziteBackend backend) : base(manifest) {
             Instance = this;
             Log = log;
             _pluginManager = pluginManager;
             LauncherBackend = launcherBackend;
             Backend = backend;
             RmlUi = rmlui;
+            Scope = scope;
 
             UpdateChecker = new UpdateChecker(this);
             Backend.Renderer.OnRender2D += Renderer_OnRender2D;
         }
 
+        /// <inheritdoc/>
         protected override void Initialize() {
+            if (_state is null) {
+                Log?.LogError("Failed to load state");
+                return;
+            }
+
             RegisterScreen(LauncherScreen.Simple, Path.Combine(AssemblyDirectory, "assets", "screens", "Simple.rml"));
 
             _panel = RmlUi.CreatePanel("PluginsBar", Path.Combine(AssemblyDirectory, "assets", "panels", "pluginsbar.rml"));
@@ -78,24 +98,24 @@ namespace Launcher {
             _settings = settings ?? new LauncherSettings();
         }
 
-        LauncherSettings ISerializeSettings<LauncherSettings>.SerializeBeforeUnload() => _settings;
+        LauncherSettings ISerializeSettings<LauncherSettings>.SerializeBeforeUnload() => _settings ?? new LauncherSettings();
 
         void ISerializeState<LauncherState>.DeserializeAfterLoad(LauncherState? state) {
             _state = state ?? new LauncherState(LauncherScreen.Simple);
         }
-        LauncherState ISerializeState<LauncherState>.SerializeBeforeUnload() => _state;
+        LauncherState ISerializeState<LauncherState>.SerializeBeforeUnload() => _state ?? new LauncherState(LauncherScreen.Simple);
 
         private void SetScreen(LauncherScreen value, bool force = false) {
-            if (!force && _state.CurrentScreen == value) {
+            if (_state is null || (!force && _state?.CurrentScreen == value)) {
                 return;
             }
 
-            var oldScreen = _state.CurrentScreen;
+            var oldScreen = _state!.CurrentScreen;
             _state.CurrentScreen = value;
             RmlUi.Screen = _state.CurrentScreen.ToString();
             Screen = RmlUi.PanelManager.GetScreen();
             _OnScreenChanged.Invoke(this, new ScreenChangedEventArgs(oldScreen, _state.CurrentScreen));
-            Log.LogDebug($"Screen changed from {oldScreen} to {_state.CurrentScreen}");
+            Log?.LogDebug($"Screen changed from {oldScreen} to {_state.CurrentScreen}");
         }
 
         private void Renderer_OnRender2D(object? sender, EventArgs e) {
@@ -129,6 +149,7 @@ namespace Launcher {
         /// <inheritdoc/>
         public LauncherScreen CustomScreenFromName(string name) => LauncherScreenHelpers.FromString(name);
 
+        /// <inheritdoc/>
         protected override void Dispose() {
             Backend.Renderer.OnRender2D -= Renderer_OnRender2D;
 

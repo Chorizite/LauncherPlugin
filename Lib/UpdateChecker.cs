@@ -1,5 +1,7 @@
-﻿using Chorizite.Common;
+﻿using Autofac;
+using Chorizite.Common;
 using Chorizite.Core.Backend.Launcher;
+using Chorizite.Core.Plugins;
 using Microsoft.Extensions.Logging;
 using RmlUi.Lib;
 using System;
@@ -11,7 +13,10 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace Launcher.Lib {
-    public class UpdateChecker : IDisposable {
+    /// <summary>
+    /// Checks for chorizite updates
+    /// </summary>
+    public class UpdateChecker {
         private readonly HttpClient client = new HttpClient();
         private LauncherPlugin launcherPlugin;
         private DateTime _lastUpdateCheck = DateTime.MinValue;
@@ -67,12 +72,12 @@ namespace Launcher.Lib {
         /// </summary>
         public Version? LatestVersion { get; private set; }
 
-        public UpdateChecker(LauncherPlugin launcherPlugin) {
+        internal UpdateChecker(LauncherPlugin launcherPlugin) {
             this.launcherPlugin = launcherPlugin;
 
             try {
                 var fvi = FileVersionInfo.GetVersionInfo(typeof(Chorizite.Core.ChoriziteConfig).Assembly.Location);
-                CurrentVersion = new Version(fvi.ProductVersion.Split('-').First());
+                CurrentVersion = new Version(fvi.ProductVersion?.Split('-').First() ?? "0.0.0");
             }
             catch (Exception ex) {
                 LauncherPlugin.Log?.LogError(ex, "Failed to get current version");
@@ -99,9 +104,12 @@ namespace Launcher.Lib {
             });
         }
 
+        /// <summary>
+        /// Update to the latest version
+        /// </summary>
         public void Update() {
             if (string.IsNullOrEmpty(_downloadUrl)) {
-                LauncherPlugin.Log.LogWarning("No update available");
+                LauncherPlugin.Log?.LogWarning("No update available");
             }
             Task.Run(async () => {
                 var request = new HttpRequestMessage(HttpMethod.Get, _downloadUrl);
@@ -132,26 +140,23 @@ namespace Launcher.Lib {
             });
         }
 
+        /// <summary>
+        /// Checks for an update
+        /// </summary>
+        /// <returns></returns>
         public async Task CheckForUpdate() {
             try {
-                var url = "https://chorizite.github.io/plugin-index/index.json";
+                var pluginIndex = await LauncherPlugin.Instance!.Scope.Resolve<IPluginManager>().RefreshPluginIndex();
+                if (pluginIndex is null) return;
 
-                var response = await client.GetAsync(url);
-                var json = await response.Content.ReadAsStringAsync();
+                LatestVersion = new Version(pluginIndex.Chorizite.Latest.Version);
+                _downloadUrl = pluginIndex.Chorizite.Latest.DownloadUrl;
 
-                var index = JsonObject.Parse(json);
+                LauncherPlugin.Log?.LogDebug($"Latest Chorizite release is {LatestVersion} vs installed version {CurrentVersion}");
 
-                if (index is not null && index["Chorizite"] is JsonObject releaseInfo) {
-                    LatestVersion = new Version(releaseInfo["Version"].ToString());
-
-                    LauncherPlugin.Log?.LogDebug($"Latest Chorizite release is {LatestVersion} vs installed version {CurrentVersion}");
-
-                    _downloadUrl = releaseInfo["DownloadUrl"]?.ToString() ?? null;
-
-                    if (LatestVersion > CurrentVersion) {
-                        _hasUpdate = true;
-                        CreateUpdatePanel();
-                    }
+                if (LatestVersion > CurrentVersion) {
+                    _hasUpdate = true;
+                    CreateUpdatePanel();
                 }
             }
             catch (Exception ex) {
@@ -162,6 +167,10 @@ namespace Launcher.Lib {
         private void CreateUpdatePanel() {
             launcherPlugin.Backend.Invoke(() => {
                 _panel = launcherPlugin.RmlUi.CreatePanel("ChoriziteUpdateNotifier", Path.Combine(launcherPlugin.AssemblyDirectory, "assets", "panels", "updatenotifier.rml"));
+                if (_panel is null) {
+                    LauncherPlugin.Log?.LogError("Failed to create update panel");
+                    return;
+                }
                 _panel.WantsAttention = true;
                 _panel.ShowInBar = true;
                 launcherPlugin.Backend.PlaySound(0x0A00057B);
@@ -169,7 +178,7 @@ namespace Launcher.Lib {
         }
 
         private void LaunchInstaller() {
-            Task.Run(async () => {
+            Task.Run(() => {
                 try {
                     Process.Start(new ProcessStartInfo() {
                         FileName = Path.Combine(tmpDir, "chorizite-installer.exe"),
@@ -184,7 +193,7 @@ namespace Launcher.Lib {
             });
         }
 
-        public void Dispose() {
+        internal void Dispose() {
             client.Dispose();
         }
     }
