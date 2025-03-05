@@ -76,10 +76,10 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Chorizite.Core" Version="0.0.12" ExcludeAssets="runtime" />
-    <PackageReference Include="Chorizite.Plugins.RmlUi" Version="0.0.7" ExcludeAssets="runtime" />
+    <PackageReference Include="Chorizite.Core" Version="0.0.13" ExcludeAssets="runtime" />
+    <PackageReference Include="Chorizite.Plugins.RmlUi" Version="0.0.9" ExcludeAssets="runtime" />
     <PackageReference Include="RmlUi.Net" Version="1.0.1" ExcludeAssets="runtime" />
-    <PackageReference Include="Chorizite.Common" Version="1.0.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Chorizite.Common" Version="1.0.2" ExcludeAssets="runtime" />
     <PackageReference Include="Autofac" Version="8.2.0" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" ExcludeAssets="runtime" />
     <PackageReference Include="Chorizite.Plugins.MSBuildTasks" Version="0.0.3" />
@@ -103,4 +103,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties manifest_1json__JsonSchema="https://chorizite.github.io/plugin-index/schemas/plugin-manifest-schema.json" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

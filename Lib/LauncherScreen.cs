@@ -5,8 +5,18 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Launcher.Lib {
+    /// <summary>
+    /// LauncherScreen
+    /// </summary>
     public enum LauncherScreen {
+        /// <summary>
+        /// None
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        /// Simple
+        /// </summary>
         Simple = 1,
     }
 

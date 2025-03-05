@@ -15,6 +15,11 @@ namespace Launcher.Lib {
         /// </summary>
         public LauncherScreen NewScreen { get; }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="oldScreen"></param>
+        /// <param name="newScreen"></param>
         public ScreenChangedEventArgs(LauncherScreen oldScreen, LauncherScreen newScreen) {
             OldScreen = oldScreen;
             NewScreen = newScreen;
